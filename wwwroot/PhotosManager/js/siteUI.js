@@ -1,15 +1,19 @@
 let contentScrollPosition = 0;
 Init_UI();
-let loginMessage = "Connexion";
-let Email = "Adresse Courriel";
+let loginMessage = "";
+let Email = "";
 let EmailError = "";
 let passwordError = "";
 
 function Init_UI() {
-    renderLogin();
+    renderLoginForm();
     $('#createProfilCmd').on("click", async function () {
         saveContentScrollPosition();
         renderCreateProfileForm();
+    });
+    $('#loginCmd').on("click", async function () {
+        saveContentScrollPosition();
+        renderLoginForm();
     });
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,8 +58,8 @@ function renderAbout() {
             </div>
         `))
 }
-function renderLogin() {
-    saveContentsScrollPosition();
+function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwordError = "") {
+    saveContentScrollPosition();
     eraseContent();
     $("#content").append(
         $(`
@@ -68,7 +72,7 @@ function renderLogin() {
                         required
                         RequireMessage = 'Veuillez entrer votre courriel'
                         InvalidMessage = 'Courriel invalide'
-                        placeholder="adresse de courriel"
+                        placeholder="Adresse courriel"
                         value='${Email}'>
                     <span style='color:red'>${EmailError}</span>
                     <input type='password'
@@ -120,37 +124,28 @@ function renderCreateProfilForm() {
             </div>
         `))
 }
-function renderError() {
+function renderError(msg) {
     saveContentsScrollPosition();
     eraseContent();
     $("#content").append(
         $(`
             <div class="content" style="text-align:center">
                 <h3>${loginMessage}</h3>
-                <form class="form" id="loginForm">
-                    <input type='email'
-                        name='Email'
-                        class="form-control"
-                        required
-                        RequireMessage = 'Veuillez entrer votre courriel'
-                        InvalidMessage = 'Courriel invalide'
-                        placeholder="adresse de courriel"
-                        value='${Email}'>
-                    <span style='color:red'>${EmailError}</span>
-                    <input type='password'
-                        name='Password'
-                        placeholder='Mot de passe'
-                        class="form-control"
-                        required
-                        RequireMessage = 'Veuillez entrer votre mot de passe'>
-                    <span style='color:red'>${passwordError}</span>
-                    <input type='submit' name='submit' value="Entrer" class="form-control btn-primary">
-                </form>
+                <hr>
                 <div class="form">
                     <hr>
-                    <button class="form-control btn-info" id="createProfilCmd">Nouveau compte</button>
-                </div>  
+                    <button class="form-control btn-info" id="loginCmd">Connexion</button>
+                </div> 
             </div>
         `))
+}
+async function createProfil(profil){
+    if(await application.register(profil)){
+        loginMessage = "Votre compte a ete cree."
+        renderLoginForm();
+    }
+    else {
+        renderError("Un probleme est survenu.");
+    }
 }
 
