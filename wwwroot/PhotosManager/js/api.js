@@ -66,15 +66,15 @@ class API {
             });
         });
     }
-    static register(profil) {
+    static register(profile) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
                 url: serverHost + "/accounts/register",
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify(profil),
-                success: profil => { resolve(profil); },
+                data: JSON.stringify(profile),
+                success: profile => { resolve(profile); },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
         });
@@ -112,18 +112,18 @@ class API {
             });
         });
     }
-    static modifyUserProfil(profil) {
+    static modifyUserProfile(profile) {
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + "/Accounts/modify/" + profil.Id,
+                url: serverHost + "/Accounts/modify/" + profile.Id,
                 type: 'PUT',
                 contentType: 'application/json',
                 headers: API.getBearerAuthorizationToken(),
-                data: JSON.stringify(profil),
-                success: (profil) => {
-                    API.storeLoggedUser(profil);
-                    resolve(profil);
+                data: JSON.stringify(profile),
+                success: (profile) => {
+                    API.storeLoggedUser(profile);
+                    resolve(profile);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
             });
@@ -139,7 +139,6 @@ class API {
                 data: {},
                 headers: API.getBearerAuthorizationToken(),
                 success: () => {
-                    API.deConnect();
                     resolve(true);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }
