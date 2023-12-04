@@ -3,10 +3,20 @@ Init_UI();
 let loginMessage = "";
 let Email = "";
 let EmailError = "";
-let passwordError = "";
+let Password = "";
+let PasswordError = "";
 
 function Init_UI() {
-    renderLoginForm(); 
+    renderLoginForm();
+    //try to login
+    $('#loginForm').submit(function (e) { 
+        console.log("trying to login");
+        e.preventDefault();
+        saveUserInput();
+        //try to login
+        login(Email, Password);
+
+    })
     //go to creation page
     $('#content').on("click", '#createProfileCmd', async function () {
         saveContentScrollPosition();
@@ -19,6 +29,7 @@ function Init_UI() {
         renderLoginForm();
         console.log("login");
     });
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
@@ -35,8 +46,8 @@ function saveContentScrollPosition() {
 function restoreContentScrollPosition() {
     $("#content")[0].scrollTop = contentScrollPosition;
 }
-function updateHeader() {
-    //todo
+function updateHeader(headerTitleFR,headerTitleEN) {
+    //TODO : mettre a jour le header
 }
 function renderAbout() {
     timeout();
@@ -77,6 +88,12 @@ function renderError(msg) {
             </div>
         `))
 }
+//added
+function saveUserInput() {
+    Email = $("input[name='Email']").val();
+    Password = $(":password").val();
+    console.log("Email: "+Email, "Password: "+Password);
+}
 //login
 function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwordError = "") {
     saveContentScrollPosition();
@@ -110,6 +127,18 @@ function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwor
                 </div>  
             </div>
         `))
+}
+async function login(email,password) {
+     if(await API.login(email,password)){
+        loginMessage = "Success!";
+         console.log("success");
+    }
+     else {
+         loginMessage = "Un probleme est survenu."; 
+         //TODO : savoir si l'erreur est du courriel ou du mot de passe
+         renderError(loginMessage);
+         renderLoginForm(loginMessage, Email, "Courriel introuvable", "Mot de passe incorrect");
+    }
 }
 //create
 function renderCreateProfileForm() {
@@ -196,7 +225,7 @@ function renderCreateProfileForm() {
         `))
 }
 async function createProfile(profile){
-    if(await application.register(profile)){
+    if(await API.register(profile)){
         loginMessage = "Votre compte a ete cree."
         renderLoginForm();
     }
