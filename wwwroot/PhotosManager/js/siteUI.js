@@ -15,7 +15,6 @@ function Init_UI() {
         saveUserInput();
         //try to login
         login(Email, Password);
-
     })
     //go to creation page
     $('#content').on("click", '#createProfileCmd', async function () {
@@ -35,7 +34,7 @@ function Init_UI() {
 /// Views rendering
 function showWaitingGif() {
     eraseContent();
-    $("#content").append($("<div class='waitingGifcontainer'><img class='waitingGif' src='images/Loading_icon.gif' /></div>'"));
+    $("#content").append($("<div class='waitingGifcontainer' > <img class='waitingGif' src='images/Loading_icon.gif' /></div > '"));
 }
 function eraseContent() {
     $("#content").empty();
@@ -128,17 +127,22 @@ function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwor
             </div>
         `))
 }
-async function login(email,password) {
-     if(await API.login(email,password)){
+async function login(email, password) {
+    try {
+        if(await API.login(email,password)){
         loginMessage = "Success!";
          console.log("success");
     }
      else {
-         loginMessage = "Un probleme est survenu."; 
          //TODO : savoir si l'erreur est du courriel ou du mot de passe
          renderError(loginMessage);
          renderLoginForm(loginMessage, Email, "Courriel introuvable", "Mot de passe incorrect");
     }
+    } catch (error) {
+        loginMessage = "Le serveur ne repond pas"; 
+        renderError(loginMessage);
+    }
+     
 }
 //create
 function renderCreateProfileForm() {
