@@ -1,3 +1,5 @@
+import User from "../../../models/user.js";
+
 let contentScrollPosition = 0;
 Init_UI();
 let loginMessage = "";
@@ -15,6 +17,15 @@ function Init_UI() {
         saveUserInput();
         //try to login
         login(Email, Password);
+    });
+    $('#createProfilForm').submit(function (e){
+        console.log("trying to create account");
+        e.preventDefault();
+        saveUserInput();
+        let name = $("input[name='Email']").val()
+        let user = User(name, Email, Password, 0, Authorizations.user())
+        API.register(user);
+        console.log("sent email to user " + user.Id);
     })
     //go to creation page
     $('#content').on("click", '#createProfileCmd', async function () {
