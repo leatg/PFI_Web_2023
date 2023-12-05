@@ -27,39 +27,7 @@ function Init_UI() {
     e.preventDefault();
     saveUserInput();
     //try to login
-    API.login(Email, Password).then((res) => {
-      //error code in responses
-      //481 == user not found
-      //482 == wrong password
-      if (!res) {
-        if (API.currentStatus === 481 || API.currentStatus === 482) {
-          if (API.currentStatus === 481) {
-            loginMessage = "";
-            EmailError = "Email introuvable";
-            PasswordError = "";
-          } else if (API.currentStatus === 482) {
-            loginMessage = "";
-            EmailError = "";
-            PasswordError = "Mot de passe incorrecte";
-          }
-          renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-        }
-        // else {
-        //     loginMessage = "Le serveur ne répond pas";
-        //     renderError(loginMessage);
-        // }
-      } else {
-        if (res.VerifyCode === "verified") {
-          //render user login
-          loginMessage = "Succes lors de la connexion";
-          renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-        } else {
-          loginMessage =
-            "Veuillez entrer le code de vérification que vous avez reçu par courriel";
-          renderCreateProfileVerification();
-        }
-      }
-    });
+    login(Email, Password);
   });
   //go to creation page
   $("#content").on("click", "#createProfileCmd", async function () {
@@ -174,6 +142,35 @@ function saveUserInput(isToCreate = false) {
   }
 }
 //login
+async function login(Email, Password) {
+  const res = await API.login(Email, Password);
+
+  if (res && res.VerifyCode === "verified") {
+    loginMessage = "Succes lors de la connexion";
+    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+  } else if (res && res.VerifyCode !== "verified") {
+    loginMessage =
+      "Veuillez entrer le code de vérification que vous avez reçu par courriel";
+    renderCreateProfileVerification();
+  } else {
+    if (API.currentStatus === 481) {
+      loginMessage = "";
+      EmailError = "Email introuvable";
+      PasswordError = "";
+    } else if (API.currentStatus === 482) {
+      loginMessage = "";
+      EmailError = "";
+      PasswordError = "Mot de passe incorrecte";
+    } else {
+      loginMessage = "Le serveur ne répond pas";
+      EmailError = "";
+      PasswordError = "";
+    }
+
+    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+  }
+}
+
 function renderLoginForm(
   loginMessage = "",
   Email = "",
@@ -314,18 +311,24 @@ function renderCreateProfile() {
     delete profile.matchedPassword;
     delete profile.matchedEmail;
     event.preventDefault();
-    showWaitingGif(); //
-    createUser(profile); // commander la création au service API
+    showWaitingGif();
+    createProfile(profile); // commander la création au service API
   });
 }
-function createUser(profile) {
-  API.register(profile).then(function (res) {
-    if (!res) {
-      console.log(API.currentStatus);
-      return;
-    }
-    console.log(res);
-  });
+async function createProfile(profile) {
+  if (await API.register(profile)) {
+    loginMessage = "Votre compte a ete cree.";
+    renderLoginForm();
+  } else {
+    renderError("Un probleme est survenu.");
+  }
+  // API.register(profile).then(function (res) {
+  //   if (!res) {
+  //     console.log(API.currentStatus);
+  //     return;
+  //   }
+  //   console.log(res);
+  // });
 }
 function getFormData($form) {
   const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
@@ -344,7 +347,7 @@ function renderCreateProfileVerification() {
             <div class="content" style="text-align:center">
                 <h3>${loginMessage}</h3>
                 <form class="form" id="VerificationForm">
-                    <input type='number'
+                    <input
                         name='CodeVerification'
                         class="form-control"
                         required
@@ -356,13 +359,4 @@ function renderCreateProfileVerification() {
             </div>
         `)
   );
-}
-
-async function createProfile(profile) {
-  if (await API.register(profile)) {
-    loginMessage = "Votre compte a ete cree.";
-    renderLoginForm();
-  } else {
-    renderError("Un probleme est survenu.");
-  }
 }
