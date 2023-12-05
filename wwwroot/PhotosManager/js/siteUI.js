@@ -61,35 +61,12 @@ function Init_UI() {
       }
     });
   });
-  //   $("#createProfileForm").submit(function (e) {
-  //     console.log("trying to create account");
-  //     e.preventDefault();
-  //     saveUserInput(true);
-  //     let name = $("input[name='Email']").val();
-  //     let user = User(name, Email, Password, 0, Authorizations.user());
-  //     API.register(user);
-  //     console.log("sent email to user " + user.Id);
-  //   });
   //go to creation page
   $("#content").on("click", "#createProfileCmd", async function () {
     console.log("creation profile");
     saveContentScrollPosition();
     renderCreateProfile();
-    initFormValidation();
-    // addConflictValidation("Users", "Name", "createProfileCmd");
-    // addConflictValidation("Users", "Email", "createProfileCmd");
-  });
-  //create profile
-  $("#saveUserCmd").submit(function (e) {
-    console.log("saving profile");
-    e.preventDefault();
-    saveUserInput(true);
-    let newUser = new User();
-    newUser.Name = Name;
-    newUser.Email = Email;
-    newUser.Password = Password;
-    console.log("saving user " + newUser.Id);
-    // API.register(newUser);
+    //create profile inside of the render profile
   });
   //return to login screen
   $("#content").on("click", "#abortCmd", async function () {
@@ -332,18 +309,33 @@ function renderCreateProfile() {
   // ajouter le mécanisme de vérification de doublon de courriel
   addConflictValidation(API.checkConflictURL(), "Email", "saveUser");
   // call back la soumission du formulaire
-  $("#createProfilForm").on("submit", function (event) {
+  $("#createProfileForm").on("submit", function (event) {
     let profile = getFormData($("#createProfileForm"));
     delete profile.matchedPassword;
     delete profile.matchedEmail;
     event.preventDefault();
     showWaitingGif(); //
-    createProfileForm(profil); // commander la création au service API
+    createUser(profile); // commander la création au service API
   });
 }
-function createProfileForm() {
-  console.log("Create profile with API");
+function createUser(profile) {
+  API.register(profile).then(function (res) {
+    if (!res) {
+      console.log(API.currentStatus);
+      return;
+    }
+    console.log(res);
+  });
 }
+function getFormData($form) {
+  const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
+  var jsonObject = {};
+  $.each($form.serializeArray(), (index, control) => {
+    jsonObject[control.name] = control.value.replace(removeTag, "");
+  });
+  return jsonObject;
+}
+
 function renderCreateProfileVerification() {
   saveContentScrollPosition();
   eraseContent();
