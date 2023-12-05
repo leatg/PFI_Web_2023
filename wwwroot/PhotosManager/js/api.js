@@ -67,6 +67,7 @@ class API {
         });
     }
     static register(profile) {
+        console.log("Registering profile");
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
@@ -104,8 +105,8 @@ class API {
                 type: 'GET',
                 contentType: 'text/plain',
                 data: {},
-                success: (profil) => {
-                    API.storeLoggedUser(profil);
+                success: (profile) => {
+                    API.storeLoggedUser(profile);
                     resolve(true);
                 },
                 error: xhr => { API.setHttpErrorState(xhr); resolve(false); }

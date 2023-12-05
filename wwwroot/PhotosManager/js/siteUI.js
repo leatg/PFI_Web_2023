@@ -5,28 +5,48 @@ let Email = "";
 let EmailError = "";
 let Password = "";
 let PasswordError = "";
-
+//creation of user
+let Name = "";
+let NameError = "";
 function Init_UI() {
-    renderLoginForm();
+    try {
+        renderLoginForm();
+    } catch (e) {
+        loginMessage = "Le serveur ne repond pas"; 
+        renderError(loginMessage);
+    }
     //try to login
     $('#loginForm').submit(function (e) { 
         console.log("trying to login");
         e.preventDefault();
-        saveUserInput();
+        saveUserInput(false);
         //try to login
         login(Email, Password);
     })
     //go to creation page
     $('#content').on("click", '#createProfileCmd', async function () {
+        console.log("creation profile");
         saveContentScrollPosition();
         renderCreateProfileForm();
-        console.log("create profile");
+        initFormValidation();
+        // addConflictValidation("Users", "Name", "createProfileCmd");
+        // addConflictValidation("Users", "Email", "createProfileCmd");
+    });
+    //create profile
+    $('#content').on("click", '#saveUserCmd', async function () {
+        console.log("saving profile");
+        saveUserInput(true);
+        // let newUser = new User();
+        newUser.Name = Name;
+        newUser.Email = Email;
+        newUser.Password = Password;
+        // API.register(newUser);
     });
     //return to login screen
     $('#content').on("click", '#abortCmd', async function () {
+        console.log("login");
         saveContentScrollPosition();
         renderLoginForm();
-        console.log("login");
     });
 
 }
@@ -88,10 +108,15 @@ function renderError(msg) {
         `))
 }
 //added
-function saveUserInput() {
+function saveUserInput(isToCreate) {
     Email = $("input[name='Email']").val();
     Password = $(":password").val();
     console.log("Email: "+Email, "Password: "+Password);
+    if (isToCreate) {
+        Name = $("#Name").val();
+        console.log("Name: "+Name);
+    }
+    
 }
 //login
 function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwordError = "") {
