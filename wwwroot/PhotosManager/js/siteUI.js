@@ -10,6 +10,11 @@ let PasswordError = "";
 //creation of user
 let Name = "";
 let NameError = "";
+let Code = "";
+let CodeError = "";
+
+//loginMessage = "Votre compte a été créé. Veuillez  prendre vos courriels pour réccupérer votre code de vérification qui vous sera demandé lors de votre prochaine connexion."
+
 function Init_UI() {
     try {
         renderLoginForm();
@@ -28,24 +33,36 @@ function Init_UI() {
             //481 == user not found
             //482 == wrong password
             if (!res) {
-                if (API.currentStatus == 481 || API.currentStatus == 482) {
-                    if (API.currentStatus == 481) {
+                if (API.currentStatus === 481 || API.currentStatus === 482) {
+                    if (API.currentStatus === 481) {
                         loginMessage ="";
                         EmailError = "Email introuvable";
                         PasswordError = "";
-                    } else if (API.currentStatus == 482) {
+                    } else if (API.currentStatus === 482) {
                         loginMessage ="";
                         EmailError = "";
                         PasswordError = "Mot de passe incorrecte";
                     }
                     renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-                } else {
-                    loginMessage = "Le serveur ne répond pas";
-                    renderError(loginMessage);
                 }
-                return;
+                // else {
+                //     loginMessage = "Le serveur ne répond pas";
+                //     renderError(loginMessage);
+                // }
+            }else{
+                if(res.VerifyCode === "verified"){
+                    //render user login
+                    loginMessage = "Succes lors de la connexion";
+                    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+                }else{
+                    loginMessage = "Veuillez entrer le code de vérification que vous avez reçu par courriel";
+                    renderCreateProfileVerification();
+                }
             }
+
+
         });
+
     });
     $('#createProfileForm').submit(function (e){
         console.log("trying to create account");
@@ -186,7 +203,8 @@ function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwor
                     <button class="form-control btn-info" id="createProfileCmd">Nouveau compte</button>
                 </div>  
             </div>
-        `))
+        `)
+    )
 }
 //create
 function renderCreateProfileForm() {
@@ -272,6 +290,28 @@ function renderCreateProfileForm() {
             </div>
         `))
 }
+function renderCreateProfileVerification(){
+    saveContentScrollPosition();
+    eraseContent();
+    $("#content").append(
+        $(`
+            <div class="content" style="text-align:center">
+                <h3>${loginMessage}</h3>
+                <form class="form" id="VerificationForm">
+                    <input type='number'
+                        name='CodeVerification'
+                        class="form-control"
+                        required
+                        RequireMessage = 'Veuillez entrer votre code de vérification'
+                        placeholder="Code de vérification de courriel">
+                    <span style='color:red'>${CodeError}</span>
+                    <input type='submit' name='submitCode' value="Vérifier" class="form-control btn-primary">
+                </form>  
+            </div>
+        `)
+    )
+}
+
 async function createProfile(profile){
     if(await API.register(profile)){
         loginMessage = "Votre compte a ete cree."
