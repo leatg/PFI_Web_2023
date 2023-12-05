@@ -16,118 +16,142 @@ let CodeError = "";
 //loginMessage = "Votre compte a été créé. Veuillez  prendre vos courriels pour réccupérer votre code de vérification qui vous sera demandé lors de votre prochaine connexion."
 
 function Init_UI() {
-    try {
-        renderLoginForm();
-    } catch (e) {
-        loginMessage = "Le serveur ne repond pas"; 
-        renderError(loginMessage);
-    }
+  try {
+    renderLoginForm();
+  } catch (e) {
+    console.log(e.message);
+  }
+  //try to login
+  $("#loginForm").submit(function (e) {
+    console.log("trying to login");
+    e.preventDefault();
+    saveUserInput();
     //try to login
-    $('#loginForm').submit(function (e) { 
-        console.log("trying to login");
-        e.preventDefault();
-        saveUserInput();
-        //try to login
-        API.login(Email, Password).then(res => {
-            //error code in responses
-            //481 == user not found
-            //482 == wrong password
-            if (!res) {
-                if (API.currentStatus === 481 || API.currentStatus === 482) {
-                    if (API.currentStatus === 481) {
-                        loginMessage ="";
-                        EmailError = "Email introuvable";
-                        PasswordError = "";
-                    } else if (API.currentStatus === 482) {
-                        loginMessage ="";
-                        EmailError = "";
-                        PasswordError = "Mot de passe incorrecte";
-                    }
-                    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-                }
-                // else {
-                //     loginMessage = "Le serveur ne répond pas";
-                //     renderError(loginMessage);
-                // }
-            }else{
-                if(res.VerifyCode === "verified"){
-                    //render user login
-                    loginMessage = "Succes lors de la connexion";
-                    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-                }else{
-                    loginMessage = "Veuillez entrer le code de vérification que vous avez reçu par courriel";
-                    renderCreateProfileVerification();
-                }
-            }
-
-
-        });
-
+    API.login(Email, Password).then((res) => {
+      //error code in responses
+      //481 == user not found
+      //482 == wrong password
+      if (!res) {
+        if (API.currentStatus === 481 || API.currentStatus === 482) {
+          if (API.currentStatus === 481) {
+            loginMessage = "";
+            EmailError = "Email introuvable";
+            PasswordError = "";
+          } else if (API.currentStatus === 482) {
+            loginMessage = "";
+            EmailError = "";
+            PasswordError = "Mot de passe incorrecte";
+          }
+          renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+        }
+        // else {
+        //     loginMessage = "Le serveur ne répond pas";
+        //     renderError(loginMessage);
+        // }
+      } else {
+        if (res.VerifyCode === "verified") {
+          //render user login
+          loginMessage = "Succes lors de la connexion";
+          renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+        } else {
+          loginMessage =
+            "Veuillez entrer le code de vérification que vous avez reçu par courriel";
+          renderCreateProfileVerification();
+        }
+      }
     });
-    $('#createProfileForm').submit(function (e){
-        console.log("trying to create account");
-        e.preventDefault();
-        saveUserInput(true);
-        let name = $("input[name='Email']").val()
-        let user = User(name, Email, Password, 0, Authorizations.user())
-        API.register(user);
-        console.log("sent email to user " + user.Id);
-    })
-    //go to creation page
-    $('#content').on("click", '#createProfileCmd', async function () {
-        console.log("creation profile");
-        saveContentScrollPosition();
-        renderCreateProfileForm();
-        initFormValidation();
-        // addConflictValidation("Users", "Name", "createProfileCmd");
-        // addConflictValidation("Users", "Email", "createProfileCmd");
-    });
-    //create profile
-    $('#saveUserCmd').submit(function (e) {
-        console.log("saving profile");
-        e.preventDefault();
-        saveUserInput(true);
-        let newUser = new User();
-        newUser.Name = Name;
-        newUser.Email = Email;
-        newUser.Password = Password;
-        console.log("saving user " + newUser.Id);
-        // API.register(newUser);
-    });
-    //return to login screen
-    $('#content').on("click", '#abortCmd', async function () {
-        console.log("login");
-        saveContentScrollPosition();
-        renderLoginForm();
-    });
-
+  });
+  //   $("#createProfileForm").submit(function (e) {
+  //     console.log("trying to create account");
+  //     e.preventDefault();
+  //     saveUserInput(true);
+  //     let name = $("input[name='Email']").val();
+  //     let user = User(name, Email, Password, 0, Authorizations.user());
+  //     API.register(user);
+  //     console.log("sent email to user " + user.Id);
+  //   });
+  //go to creation page
+  $("#content").on("click", "#createProfileCmd", async function () {
+    console.log("creation profile");
+    saveContentScrollPosition();
+    renderCreateProfile();
+    initFormValidation();
+    // addConflictValidation("Users", "Name", "createProfileCmd");
+    // addConflictValidation("Users", "Email", "createProfileCmd");
+  });
+  //create profile
+  $("#saveUserCmd").submit(function (e) {
+    console.log("saving profile");
+    e.preventDefault();
+    saveUserInput(true);
+    let newUser = new User();
+    newUser.Name = Name;
+    newUser.Email = Email;
+    newUser.Password = Password;
+    console.log("saving user " + newUser.Id);
+    // API.register(newUser);
+  });
+  //return to login screen
+  $("#content").on("click", "#abortCmd", async function () {
+    console.log("login");
+    saveContentScrollPosition();
+    renderLoginForm();
+  });
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
 function showWaitingGif() {
-    eraseContent();
-    $("#content").append($("<div class='waitingGifcontainer' > <img class='waitingGif' src='images/Loading_icon.gif' /></div > '"));
+  eraseContent();
+  $("#content").append(
+    $(
+      "<div class='waitingGifcontainer' > <img class='waitingGif' src='images/Loading_icon.gif' /></div > '"
+    )
+  );
 }
 function eraseContent() {
-    $("#content").empty();
+  $("#content").empty();
 }
 function saveContentScrollPosition() {
-    contentScrollPosition = $("#content")[0].scrollTop;
+  contentScrollPosition = $("#content")[0].scrollTop;
 }
 function restoreContentScrollPosition() {
-    $("#content")[0].scrollTop = contentScrollPosition;
+  $("#content")[0].scrollTop = contentScrollPosition;
 }
-function updateHeader(headerTitleFR,headerTitleEN) {
-    //TODO : mettre a jour le header
+function updateHeader(headerTitleFR, headerTitleEN) {
+  //TODO : faire en sorte que le titre change selon la langue
+  let header = $("#header");
+  let headerTitle = headerTitleFR;
+  header.empty();
+  header.append(
+    $(`
+            <div id="header"> 
+                <span title="${headerTitle}" id="listPhotosCmd"> 
+                    <img src="images/PhotoCloudLogo.png" class="appLogo"> 
+                </span> 
+                <span class="viewTitle">${headerTitle}
+                    <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div> 
+                </span>
+                <div class="headerMenusContainer">
+                    <span>&nbsp;</span>
+                    <!--filler-->
+                    <i title="Modifier votre profil">
+                        <div class="UserAvatarSmall"</div>
+                    </i> 
+                    <div class="dropdown ms-auto dropdownLayout"> 
+                    <!-- Articles de menu --> 
+                    </div> </div>
+            </div>
+        `)
+  );
 }
 function renderAbout() {
-    timeout();
-    saveContentScrollPosition();
-    eraseContent();
-    updateHeader("À propos...", "about");
+  timeout();
+  saveContentScrollPosition();
+  eraseContent();
+  updateHeader("À propos...", "about");
 
-    $("#content").append(
-        $(`
+  $("#content").append(
+    $(`
             <div class="aboutContainer">
                 <h2>Gestionnaire de photos</h2>
                 <hr>
@@ -142,13 +166,14 @@ function renderAbout() {
                     Collège Lionel-Groulx, automne 2023
                 </p>
             </div>
-        `))
+        `)
+  );
 }
 function renderError(msg) {
-    saveContentScrollPosition();
-    eraseContent();
-    $("#content").append(
-        $(`
+  saveContentScrollPosition();
+  eraseContent();
+  $("#content").append(
+    $(`
             <div class="content" style="text-align:center">
                 <h3>${loginMessage}</h3>
                 <hr>
@@ -157,26 +182,33 @@ function renderError(msg) {
                     <button class="form-control btn-info" id="loginCmd">Connexion</button>
                 </div> 
             </div>
-        `))
+        `)
+  );
 }
-//added 
+//added
 //true if creating a new user
 function saveUserInput(isToCreate = false) {
-    Email = $("input[name='Email']").val();
-    Password = $("input[name='Password']").val();
-    console.log("Email: "+Email, "Password: "+Password);
-    if (isToCreate) {
-        Name = $("#Name").val();
-        console.log("Name: "+Name);
-    }
-    
+  Email = $("input[name='Email']").val();
+  Password = $("input[name='Password']").val();
+  console.log("Email: " + Email, "Password: " + Password);
+  if (isToCreate) {
+    Name = $("#Name").val();
+    console.log("Name: " + Name);
+  }
 }
 //login
-function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwordError = "") {
-    saveContentScrollPosition();
-    eraseContent();
-    $("#content").append(
-        $(`
+function renderLoginForm(
+  loginMessage = "",
+  Email = "",
+  EmailError = "",
+  passwordError = ""
+) {
+  updateHeader("Connexion", "login");
+  $("#newPhotoCmd").hide();
+  saveContentScrollPosition();
+  eraseContent();
+  $("#content").append(
+    $(`
             <div class="content" style="text-align:center">
                 <h3>${loginMessage}</h3>
                 <form class="form" id="loginForm">
@@ -204,15 +236,18 @@ function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwor
                 </div>  
             </div>
         `)
-    )
+  );
 }
 //create
-function renderCreateProfileForm() {
-    saveContentScrollPosition();
-    eraseContent();
-    $("#content").append(
-        $(`
-            <form class="form" id="createProfilForm"> 
+function renderCreateProfile() {
+  //fonction du prof
+  noTimeout(); // ne pas limiter le temps d’inactivité
+  eraseContent(); // effacer le conteneur #content
+  updateHeader("Inscription", "createProfil"); // mettre à jour l’entête et menu
+  $("#newPhotoCmd").hide(); // camouffler l’icone de commande d’ajout de photo
+  $("#content").append(
+    $(`
+            <form class="form" id="createProfileForm"> 
                 <fieldset> 
                     <legend>Adresse ce courriel</legend> 
                         <input 
@@ -274,8 +309,8 @@ function renderCreateProfileForm() {
                     <div class="imageUploader"
                          newImage='true'
                          controlId='Avatar'
-                         imageSrc='../images/no-avatar.png'
-                        waitingImage="../images/Loading_icon.gif">
+                         imageSrc='images/no-avatar.png'
+                        waitingImage="images/Loading_icon.gif">
                     </div>
                 </fieldset>
                 <input
@@ -288,13 +323,32 @@ function renderCreateProfileForm() {
             <div class="cancel">
                 <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
             </div>
-        `))
+        `)
+  );
+  $("#loginCmd").on("click", renderLoginForm); // call back sur clic
+  initFormValidation();
+  initImageUploaders();
+  $("#abortCmd").on("click", renderLoginForm); // call back sur clic
+  // ajouter le mécanisme de vérification de doublon de courriel
+  addConflictValidation(API.checkConflictURL(), "Email", "saveUser");
+  // call back la soumission du formulaire
+  $("#createProfilForm").on("submit", function (event) {
+    let profile = getFormData($("#createProfileForm"));
+    delete profile.matchedPassword;
+    delete profile.matchedEmail;
+    event.preventDefault();
+    showWaitingGif(); //
+    createProfileForm(profil); // commander la création au service API
+  });
 }
-function renderCreateProfileVerification(){
-    saveContentScrollPosition();
-    eraseContent();
-    $("#content").append(
-        $(`
+function createProfileForm() {
+  console.log("Create profile with API");
+}
+function renderCreateProfileVerification() {
+  saveContentScrollPosition();
+  eraseContent();
+  $("#content").append(
+    $(`
             <div class="content" style="text-align:center">
                 <h3>${loginMessage}</h3>
                 <form class="form" id="VerificationForm">
@@ -309,16 +363,14 @@ function renderCreateProfileVerification(){
                 </form>  
             </div>
         `)
-    )
+  );
 }
 
-async function createProfile(profile){
-    if(await API.register(profile)){
-        loginMessage = "Votre compte a ete cree."
-        renderLoginForm();
-    }
-    else {
-        renderError("Un probleme est survenu.");
-    }
+async function createProfile(profile) {
+  if (await API.register(profile)) {
+    loginMessage = "Votre compte a ete cree.";
+    renderLoginForm();
+  } else {
+    renderError("Un probleme est survenu.");
+  }
 }
-
