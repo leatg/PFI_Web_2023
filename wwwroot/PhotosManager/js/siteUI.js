@@ -1,4 +1,4 @@
-import User from "../../../models/user.js";
+//import User from "../../../models/user.js"; ca fait crash le site
 
 let contentScrollPosition = 0;
 Init_UI();
@@ -21,14 +21,36 @@ function Init_UI() {
     $('#loginForm').submit(function (e) { 
         console.log("trying to login");
         e.preventDefault();
-        saveUserInput(false);
+        saveUserInput();
         //try to login
-        login(Email, Password);
+        API.login(Email, Password).then(res => {
+            //error code in responses
+            //481 == user not found
+            //482 == wrong password
+            if (!res) {
+                if (API.currentStatus == 481 || API.currentStatus == 482) {
+                    if (API.currentStatus == 481) {
+                        loginMessage ="";
+                        EmailError = "Email introuvable";
+                        PasswordError = "";
+                    } else if (API.currentStatus == 482) {
+                        loginMessage ="";
+                        EmailError = "";
+                        PasswordError = "Mot de passe incorrecte";
+                    }
+                    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+                } else {
+                    loginMessage = "Le serveur ne répond pas";
+                    renderError(loginMessage);
+                }
+                return;
+            }
+        });
     });
-    $('#createProfilForm').submit(function (e){
+    $('#createProfileForm').submit(function (e){
         console.log("trying to create account");
         e.preventDefault();
-        saveUserInput();
+        saveUserInput(true);
         let name = $("input[name='Email']").val()
         let user = User(name, Email, Password, 0, Authorizations.user())
         API.register(user);
@@ -44,13 +66,15 @@ function Init_UI() {
         // addConflictValidation("Users", "Email", "createProfileCmd");
     });
     //create profile
-    $('#content').on("click", '#saveUserCmd', async function () {
+    $('#saveUserCmd').submit(function (e) {
         console.log("saving profile");
+        e.preventDefault();
         saveUserInput(true);
-        // let newUser = new User();
+        let newUser = new User();
         newUser.Name = Name;
         newUser.Email = Email;
         newUser.Password = Password;
+        console.log("saving user " + newUser.Id);
         // API.register(newUser);
     });
     //return to login screen
@@ -118,10 +142,11 @@ function renderError(msg) {
             </div>
         `))
 }
-//added
-function saveUserInput(isToCreate) {
+//added 
+//true if creating a new user
+function saveUserInput(isToCreate = false) {
     Email = $("input[name='Email']").val();
-    Password = $(":password").val();
+    Password = $("input[name='Password']").val();
     console.log("Email: "+Email, "Password: "+Password);
     if (isToCreate) {
         Name = $("#Name").val();
@@ -162,23 +187,6 @@ function renderLoginForm(loginMessage = "", Email = "", EmailError = "", passwor
                 </div>  
             </div>
         `))
-}
-async function login(email, password) {
-    try {
-        if(await API.login(email,password)){
-        loginMessage = "Success!";
-         console.log("success");
-    }
-     else {
-         //TODO : savoir si l'erreur est du courriel ou du mot de passe
-         renderError(loginMessage);
-         renderLoginForm(loginMessage, Email, "Courriel introuvable", "Mot de passe incorrect");
-    }
-    } catch (error) {
-        loginMessage = "Le serveur ne repond pas"; 
-        renderError(loginMessage);
-    }
-     
 }
 //create
 function renderCreateProfileForm() {
