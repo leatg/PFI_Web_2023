@@ -12,8 +12,6 @@ let Name = "";
 let NameError = "";
 let Code = "";
 let CodeError = "";
-//user connected
-let loggedUser;
 
 //loginMessage = "Votre compte a été créé. Veuillez  prendre vos courriels pour réccupérer votre code de vérification qui vous sera demandé lors de votre prochaine connexion."
 
@@ -66,28 +64,29 @@ function restoreContentScrollPosition() {
 }
 function updateHeader(headerTitleFR, headerTitleEN) {
   //TODO : faire en sorte que le titre change selon la langue
-  if (!userIsConnected) {
-  }
   let header = $("#header");
-  let headerTitle = headerTitleFR; //pour switch entre fr et en plus tard
+  let headerTitle = headerTitleFR;
   header.empty();
   header.append(
     $(`
-  <div id="header"> 
-    <span title="${headerTitle}" id="listPhotosCmd"> 
-      <img src="images/PhotoCloudLogo.png" class="appLogo"> 
-    </span> 
-    <span class="viewTitle">${headerTitle}
-      <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div> 
-    </span>
-      <div class="headerMenusContainer"> <span>&nbsp;</span> 
-        <!--filler--> 
-        <i title="Modifier votre profil">
-          <div class="UserAvatarSmall" userId="${loggedUser.Id}" id="editProfileCmd" style="background-image:url('${loggedUser.Avatar}')" title="${loggedUser.Name}"></div>
-        </i>
-        <div class="dropdown ms-auto dropdownLayout"> <!-- Articles de menu --> </div>
-      </div>
-    </div>`)
+            <div id="header"> 
+                <span title="${headerTitle}" id="listPhotosCmd"> 
+                    <img src="images/PhotoCloudLogo.png" class="appLogo"> 
+                </span> 
+                <span class="viewTitle">${headerTitle}
+                    <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div> 
+                </span>
+                <div class="headerMenusContainer">
+                    <span>&nbsp;</span>
+                    <!--filler-->
+                    <i title="Modifier votre profil">
+                        <div class="UserAvatarSmall"</div>
+                    </i> 
+                    <div class="dropdown ms-auto dropdownLayout"> 
+                    <!-- Articles de menu --> 
+                    </div> </div>
+            </div>
+        `)
   );
 }
 function renderAbout() {
@@ -144,11 +143,12 @@ function saveUserInput(isToCreate = false) {
 }
 //login
 async function login(Email, Password) {
-  loggedUser = await API.login(Email, Password);
-  if (loggedUser && loggedUser.VerifyCode === "verified") {
+  const res = await API.login(Email, Password);
+
+  if (res && res.VerifyCode === "verified") {
     loginMessage = "Succes lors de la connexion";
     renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-  } else if (loggedUser && loggedUser.VerifyCode !== "verified") {
+  } else if (res && res.VerifyCode !== "verified") {
     loginMessage =
       "Veuillez entrer le code de vérification que vous avez reçu par courriel";
     renderCreateProfileVerification();
@@ -317,15 +317,18 @@ function renderCreateProfile() {
 }
 async function createProfile(profile) {
   if (await API.register(profile)) {
-    loginMessage =
-      "Votre compte a ete crée. " +
-      "Veuillez vérifier vos courriels " +
-      "afin de récupérer votre code de vérification " +
-      "qui vous sera demandé lors de votre prochaine connexion";
-    renderLoginForm(loginMessage);
+    loginMessage = "Votre compte a ete cree.";
+    renderLoginForm();
   } else {
     renderError("Un probleme est survenu.");
   }
+  // API.register(profile).then(function (res) {
+  //   if (!res) {
+  //     console.log(API.currentStatus);
+  //     return;
+  //   }
+  //   console.log(res);
+  // });
 }
 function getFormData($form) {
   const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
@@ -337,7 +340,7 @@ function getFormData($form) {
 }
 
 function renderCreateProfileVerification() {
-  updateHeader("Vérification", "Vrification");
+  saveContentScrollPosition();
   eraseContent();
   $("#content").append(
     $(`
