@@ -1,6 +1,9 @@
 //import User from "../../../models/user.js"; ca fait crash le site
 
 let contentScrollPosition = 0;
+
+let loggedUser = "";
+
 Init_UI();
 let loginMessage = "";
 let Email = "";
@@ -41,6 +44,16 @@ function Init_UI() {
     console.log("login");
     saveContentScrollPosition();
     renderLoginForm();
+  });
+  //verify code
+  $("#VerificationForm").submit(function (e) {
+    console.log("check code");
+    e.preventDefault();
+    // try {
+    //   profileVerification();
+    // } catch (e) {
+    //   console.log(e);
+    // }
   });
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,18 +148,16 @@ function renderError(msg) {
 function saveUserInput(isToCreate = false) {
   Email = $("input[name='Email']").val();
   Password = $("input[name='Password']").val();
-  console.log("Email: " + Email, "Password: " + Password);
   if (isToCreate) {
     Name = $("#Name").val();
-    console.log("Name: " + Name);
   }
 }
 //login
 async function login(Email, Password) {
   const res = await API.login(Email, Password);
-
   if (res && res.VerifyCode === "verified") {
     loginMessage = "Succes lors de la connexion";
+    loggedUser = res;
     renderLoginForm(loginMessage, Email, EmailError, PasswordError);
   } else if (res && res.VerifyCode !== "verified") {
     loginMessage =
@@ -177,6 +188,7 @@ function renderLoginForm(
   EmailError = "",
   passwordError = ""
 ) {
+  console.log(":3");
   updateHeader("Connexion", "login");
   $("#newPhotoCmd").hide();
   saveContentScrollPosition();
@@ -354,9 +366,17 @@ function renderCreateProfileVerification() {
                         RequireMessage = 'Veuillez entrer votre code de vérification'
                         placeholder="Code de vérification de courriel">
                     <span style='color:red'>${CodeError}</span>
-                    <input type='submit' name='submitCode' value="Vérifier" class="form-control btn-primary">
+                    <input type='submit' id="submitCode" name='submitCode' value="Vérifier" class="form-control btn-primary">
                 </form>  
             </div>
         `)
   );
+}
+async function profileVerification() {
+  if (await API.verifyEmail(loggedUser.id,Code)) {
+    loginMessage = "Compte verifier avec succes";
+  } else {
+    loginMessage = "Nope";
+  }
+  renderCreateProfileVerification();
 }
