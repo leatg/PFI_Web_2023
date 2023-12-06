@@ -45,16 +45,7 @@ function Init_UI() {
     saveContentScrollPosition();
     renderLoginForm();
   });
-  //verify code
-  $("#VerificationForm").submit(function (e) {
-    console.log("check code");
-    e.preventDefault();
-    // try {
-    //   profileVerification();
-    // } catch (e) {
-    //   console.log(e);
-    // }
-  });
+
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
@@ -155,6 +146,7 @@ function saveUserInput(isToCreate = false) {
 //login
 async function login(Email, Password) {
   const res = await API.login(Email, Password);
+  loggedUser = res;
   if (res && res.VerifyCode === "verified") {
     loginMessage = "Succes lors de la connexion";
     loggedUser = res;
@@ -354,6 +346,7 @@ function getFormData($form) {
 function renderCreateProfileVerification() {
   saveContentScrollPosition();
   eraseContent();
+  //verify code
   $("#content").append(
     $(`
             <div class="content" style="text-align:center">
@@ -361,8 +354,10 @@ function renderCreateProfileVerification() {
                 <form class="form" id="VerificationForm">
                     <input
                         name='CodeVerification'
+                        id='CodeVerification'
                         class="form-control"
                         required
+                        pattern="[0-9]*"
                         RequireMessage = 'Veuillez entrer votre code de vérification'
                         placeholder="Code de vérification de courriel">
                     <span style='color:red'>${CodeError}</span>
@@ -371,9 +366,19 @@ function renderCreateProfileVerification() {
             </div>
         `)
   );
+  $("#VerificationForm").submit(function (e) {
+    console.log("check code");
+    e.preventDefault();
+    Code = $("input[name='CodeVerification']").val();
+    try {
+      profileVerification();
+    } catch (e) {
+      console.log(e);
+    }
+  });
 }
 async function profileVerification() {
-  if (await API.verifyEmail(loggedUser.id,Code)) {
+  if (await API.verifyEmail(loggedUser.Id, Code)) {
     loginMessage = "Compte verifier avec succes";
   } else {
     loginMessage = "Nope";
