@@ -67,11 +67,10 @@ class API {
         });
     }
     static register(profile) {
-        console.log("Registering profile");
         API.initHttpState();
         return new Promise(resolve => {
             $.ajax({
-                url: serverHost + "/accounts/register",
+                url: API.registerRequestURL(),
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(profile),

@@ -30,7 +30,7 @@ function Init_UI() {
     e.preventDefault();
     saveUserInput();
     //try to login
-    login(Email, Password);
+    login();
   });
   //go to creation page
   $("#content").on("click", "#createProfileCmd", async function () {
@@ -45,7 +45,6 @@ function Init_UI() {
     saveContentScrollPosition();
     renderLoginForm();
   });
-
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
@@ -71,6 +70,17 @@ function updateHeader(headerTitleFR, headerTitleEN) {
   let header = $("#header");
   let headerTitle = headerTitleFR;
   header.empty();
+  let isOnline =
+    loggedUser == ""
+      ? ""
+      : `
+  <i title="Modifier votre profil">
+     <div className="UserAvatarSmall"
+          userid="${loggedUser.Id}"
+          id="editProfilCmd"
+          style="background-image:url('${loggedUser.Avatar}')"
+          title="${loggedUser.Name}">
+     </div>`;
   header.append(
     $(`
             <div id="header"> 
@@ -83,22 +93,20 @@ function updateHeader(headerTitleFR, headerTitleEN) {
                 <div class="headerMenusContainer">
                     <span>&nbsp;</span>
                     <!--filler-->
-                    <i title="Modifier votre profil">
-                        <div class="UserAvatarSmall"</div>
-                    </i> 
-                    <div class="dropdown ms-auto dropdownLayout"> 
+                    ${isOnline}
+                    <div class="dropdown ms-auto dropdownLayout">
                     <!-- Articles de menu --> 
                     </div> </div>
             </div>
         `)
   );
 }
+
 function renderAbout() {
   timeout();
   saveContentScrollPosition();
   eraseContent();
   updateHeader("À propos...", "about");
-
   $("#content").append(
     $(`
             <div class="aboutContainer">
@@ -109,7 +117,7 @@ function renderAbout() {
                     d'interface utilisateur monopage réactive.
                 </p>
                 <p>
-                    Auteur: Nicolas Chourot
+                    Auteur: Léa Trudeau et Luis Carlos Lopez
                 </p>
                 <p>
                     Collège Lionel-Groulx, automne 2023
@@ -144,18 +152,9 @@ function saveUserInput(isToCreate = false) {
   }
 }
 //login
-async function login(Email, Password) {
+async function login() {
   const res = await API.login(Email, Password);
-  loggedUser = res;
-  if (res && res.VerifyCode === "verified") {
-    loginMessage = "Succes lors de la connexion";
-    loggedUser = res;
-    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
-  } else if (res && res.VerifyCode !== "verified") {
-    loginMessage =
-      "Veuillez entrer le code de vérification que vous avez reçu par courriel";
-    renderCreateProfileVerification();
-  } else {
+  if (!res) {
     if (API.currentStatus === 481) {
       loginMessage = "";
       EmailError = "Email introuvable";
@@ -171,6 +170,16 @@ async function login(Email, Password) {
     }
 
     renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+  } else {
+    console.log(API.retrieveLoggedUser());
+    if (API.retrieveLoggedUser().VerifyCode === "verified") {
+      loginMessage = "Succes lors de la connexion";
+      renderAbout();
+    } else {
+      loginMessage =
+        "Veuillez entrer le code de vérification que vous avez reçu par courriel";
+      renderCreateProfileVerification();
+    }
   }
 }
 
@@ -326,13 +335,6 @@ async function createProfile(profile) {
   } else {
     renderError("Un probleme est survenu.");
   }
-  // API.register(profile).then(function (res) {
-  //   if (!res) {
-  //     console.log(API.currentStatus);
-  //     return;
-  //   }
-  //   console.log(res);
-  // });
 }
 function getFormData($form) {
   const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
@@ -378,10 +380,10 @@ function renderCreateProfileVerification() {
   });
 }
 async function profileVerification() {
-  if (await API.verifyEmail(loggedUser.Id, Code)) {
-    loginMessage = "Compte verifier avec succes";
+  if (await API.verifyEmail(API.retrieveLoggedUser().Id, Code)) {
+    renderAbout();
   } else {
-    loginMessage = "Nope";
+    CodeError = "Le code ne correspond pas au code lie a votre compte";
   }
   renderCreateProfileVerification();
 }
