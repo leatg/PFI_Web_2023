@@ -65,41 +65,37 @@ function saveContentScrollPosition() {
 function restoreContentScrollPosition() {
   $("#content")[0].scrollTop = contentScrollPosition;
 }
-function updateHeader(headerTitleFR, headerTitleEN) {
-  //TODO : faire en sorte que le titre change selon la langue
+function updateHeader(desc, pageName) {
+  localStorage.setItem('currentPage', pageName)
   let header = $("#header");
-  let headerTitle = headerTitleFR;
+  let loggedUser = API.retrieveLoggedUser()
   header.empty();
-  let isOnline =
-    loggedUser == ""
-      ? ""
-      : `
-  <i title="Modifier votre profil">
-     <div className="UserAvatarSmall"
-          userid="${loggedUser.Id}"
-          id="editProfilCmd"
-          style="background-image:url('${loggedUser.Avatar}')"
-          title="${loggedUser.Name}">
-     </div>`;
   header.append(
-    $(`
-            <div id="header"> 
-                <span title="${headerTitle}" id="listPhotosCmd"> 
-                    <img src="images/PhotoCloudLogo.png" class="appLogo"> 
-                </span> 
-                <span class="viewTitle">${headerTitle}
-                    <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div> 
-                </span>
-                <div class="headerMenusContainer">
-                    <span>&nbsp;</span>
-                    <!--filler-->
-                    ${isOnline}
-                    <div class="dropdown ms-auto dropdownLayout">
-                    <!-- Articles de menu --> 
-                    </div> </div>
+      $(`
+            <span title="${desc}" id="${pageName + "cmd"}">
+                <img src="images/PhotoCloudLogo.png" class="appLogo">
+            </span>
+            <span class="viewTitle">${desc}
+                <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div>
+            </span>
+            <div class="headerMenusContainer">
+                <span>&nbsp;</span> <!--filler-->
+                <i title="Modifier votre profil">
+                    <div class="UserAvatarSmall" id="editProfilCmd"
+                        style="background-image:url('${loggedUser === null ? '' : loggedUser.Avatar}')"
+                        title="${loggedUser === null ? '' : loggedUser.Name}">
+                    </div>
+                </i>
+                <div data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="cmdIcon fa fa-ellipsis-vertical"></i>
+                </div>
+                <div class="dropdown-menu noselect">
+<!--                    <div class="dropdown-divider"></div>-->
+                </div>
             </div>
-        `)
-  );
+        `))
+
+ 
 }
 
 function renderAbout() {
