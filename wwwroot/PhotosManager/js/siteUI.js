@@ -20,10 +20,11 @@ function Init_UI() {
     console.log(e.message);
   }
   //try to login
-  $("#loginForm").submit(function (e) {
+  $("#content").on("click","#loginPls",function (e) {
     console.log("trying to login");
     e.preventDefault();
     saveUserInput();
+    console.log("Email: "+Email,"Password: "+Password)
     //try to login
     login();
   });
@@ -124,6 +125,7 @@ function updateHeader(desc, name) {
     console.log("logout");
     saveContentScrollPosition();
     await API.logout();
+    window.location.href = window.location.origin + window.location.pathname;
     renderLoginForm();
   });
   header.on("click", "#editProfileMenuCmd", async function () {
@@ -258,7 +260,6 @@ async function login() {
 
     renderLoginForm(loginMessage, Email, EmailError, PasswordError);
   } else {
-    console.log(API.retrieveLoggedUser());
     if (API.retrieveLoggedUser().VerifyCode === "verified") {
       loginMessage = "Succes lors de la connexion";
       renderAbout();
@@ -302,7 +303,7 @@ function renderLoginForm(
                         required
                         RequireMessage = 'Veuillez entrer votre mot de passe'>
                     <span style='color:red'>${passwordError}</span>
-                    <input type='submit' name='submit' value="Entrer" class="form-control btn-primary">
+                    <input type='submit' name='submit' id="loginPls" value="Entrer" class="form-control btn-primary">
                 </form>
                 <div class="form">
                     <hr>
