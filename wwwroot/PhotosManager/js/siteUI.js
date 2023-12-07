@@ -136,6 +136,7 @@ function updateHeader(desc, name) {
     $("#editProfileForm").submit(async function (e) {
       e.preventDefault();
       let profile = getFormData($("#editProfileForm"));
+      profile.VerifyCode = profile.Email === profile.matchedEmail ? "verified" : "unverified";
       console.log(profile);
         API.modifyUserProfile(profile).then(newProfile => {
             console.log(newProfile)
@@ -144,7 +145,7 @@ function updateHeader(desc, name) {
             } else {
                 API.eraseLoggedUser(API.retrieveLoggedUser());
                 API.storeLoggedUser(newProfile);
-                renderAbout();
+                renderCreateProfileVerification();
             }
         });
     });
@@ -160,7 +161,6 @@ function updateHeader(desc, name) {
     renderAbout();
   });
 }
-
 function showDropDown() {
   return `<span class="dropdown-item" id="manageUserCm"> 
             <i class="menuIcon fas fa-user-cog mx-2"></i> Gestion des usagers </span>
@@ -256,7 +256,7 @@ async function login() {
       PasswordError = "";
     }
 
-    // renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
   } else {
     console.log(API.retrieveLoggedUser());
     if (API.retrieveLoggedUser().VerifyCode === "verified") {
@@ -529,10 +529,41 @@ function renderModificationProfile() {
         <div class="cancel">
             <hr>
             <a>
-                <button class="form-control btn-warning">Effacer le compte</button>
+                <button class="form-control btn-warning" id="renderDeleteProfile">Effacer le compte</button>
             </a></div>
 
     </div>
     `)
   );
+  $('#content').on("click","#renderDeleteProfile", function (){
+    renderDeleteProfile();
+  });
+}
+function renderDeleteProfile(){
+  let loggedUser = API.retrieveLoggedUser();
+  eraseContent()
+  updateHeader("Retrait de compte", "Retrait de compte")
+  timeout()
+  $("#content").append(`
+        <div class="viewTitle" style="text-align: center">Voulez-vous vraiment effacer votre compte?</div> 
+        <form class="UserdeleteForm">
+            <input  type='submit' name='submit' value="Effacer mon compte" class="form-control btn-danger UserdeleteForm">
+        </form>
+        <div class="UserdeleteForm">
+            <button class="form-control btn-secondary" id="cancelCmd">Annuler</button>
+        </div>
+    `)
+  $(`.UserdeleteForm`).submit(async (e) => {
+    e.preventDefault()
+    const res = await API.unsubscribeAccount(loggedUser.Id);
+    if(res){
+      API.logout();
+      renderLoginForm();
+      console.log("delete");
+    }
+  })
+  $(`#cancelCmd`).click(() => {
+    renderModificationProfile();
+  });
+
 }
