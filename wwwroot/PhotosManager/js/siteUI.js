@@ -1,9 +1,4 @@
-//import User from "../../../models/user.js"; ca fait crash le site
-
 let contentScrollPosition = 0;
-
-let loggedUser = "";
-
 Init_UI();
 let loginMessage = "";
 let Email = "";
@@ -46,6 +41,7 @@ function Init_UI() {
     renderLoginForm();
   });
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Views rendering
 function showWaitingGif() {
@@ -56,46 +52,137 @@ function showWaitingGif() {
     )
   );
 }
+
 function eraseContent() {
   $("#content").empty();
 }
+
 function saveContentScrollPosition() {
   contentScrollPosition = $("#content")[0].scrollTop;
 }
+
 function restoreContentScrollPosition() {
   $("#content")[0].scrollTop = contentScrollPosition;
 }
-function updateHeader(desc, pageName) {
-  localStorage.setItem('currentPage', pageName)
+
+function updateHeader(desc, name) {
+  localStorage.setItem("currentPage", name);
   let header = $("#header");
-  let loggedUser = API.retrieveLoggedUser()
+  let loggedUser = API.retrieveLoggedUser();
   header.empty();
   header.append(
-      $(`
-            <span title="${desc}" id="${pageName + "cmd"}">
+    $(`
+            <span title="${desc}" id="${name + "cmd"}">
                 <img src="images/PhotoCloudLogo.png" class="appLogo">
             </span>
             <span class="viewTitle">${desc}
                 <div class="cmdIcon fa fa-plus" id="newPhotoCmd" title="Ajouter une photo"></div>
             </span>
             <div class="headerMenusContainer">
-                <span>&nbsp;</span> <!--filler-->
+                <span>&nbsp;</span> 
+                <!--filler-->
                 <i title="Modifier votre profil">
                     <div class="UserAvatarSmall" id="editProfilCmd"
-                        style="background-image:url('${loggedUser === null ? '' : loggedUser.Avatar}')"
-                        title="${loggedUser === null ? '' : loggedUser.Name}">
+                        style="background-image:url('${
+                          loggedUser === null ? "" : loggedUser.Avatar
+                        }')"
+                        title="${loggedUser === null ? "" : loggedUser.Name}">
                     </div>
                 </i>
                 <div data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="cmdIcon fa fa-ellipsis-vertical"></i>
                 </div>
-                <div class="dropdown-menu noselect">
-<!--                    <div class="dropdown-divider"></div>-->
-                </div>
+                <div class="dropdown-menu noselect"></div>
             </div>
-        `))
+        `)
+  );
 
- 
+  let dropDownContent = showDropDown();
+  $(".dropdown-menu.noselect").append(dropDownContent);
+    if(loggedUser == null){
+
+        $('#logoutCmd').hide();
+        $('#manageUserCm').hide();
+        $('#editProfileMenuCmd').hide();
+        $('#listPhotosMenuCmd').hide();
+        $('#sortByDateCmd').hide();
+        $('#sortByOwnersCmd').hide();
+        $('#sortByLikesCmd').hide();
+        $('#ownerOnlyCmd').hide();
+        $('#premier').hide();
+        $('#deuxieme').hide();
+        $('#troisieme').hide();
+    }
+  if(loggedUser != null && loggedUser.Authorizations.readAccess === 1){
+      $('#manageUserCm').hide();
+      $('#premier').hide();
+  }
+  if(loggedUser != null && (loggedUser.Authorizations.readAccess === 1 ||loggedUser.Authorizations.readAccess === 2)){
+      $('#loginCmd').hide();
+  }
+  header.on("click", "#logoutCmd", async function () {
+    console.log("logout");
+    saveContentScrollPosition();
+    await API.logout();
+    renderLoginForm();
+  });
+  header.on("click", "#editProfileMenuCmd", async function () {
+    console.log("modification");
+    saveContentScrollPosition();
+    renderModificationProfile();
+    initFormValidation();
+    initImageUploaders();
+    addConflictValidation(API.checkConflictURL(), 'Email', 'saveUser');
+    $("#editProfileForm").submit(async function (e) {
+      e.preventDefault();
+      let profile = getFormData($("#editProfileForm"));
+      console.log(profile);
+        API.modifyUserProfile(profile).then(newProfile => {
+            console.log(newProfile)
+            if (!newProfile) {
+                renderLoginForm();
+            } else {
+                API.eraseLoggedUser(API.retrieveLoggedUser());
+                API.storeLoggedUser(newProfile);
+                renderAbout();
+            }
+        });
+    });
+    $("#content").on("click", "#abortCmd", async function () {
+      saveContentScrollPosition();
+      renderAbout();
+    });
+  });
+
+  header.on("click", "#aboutCmd", async function () {
+    console.log("about");
+    saveContentScrollPosition();
+    renderAbout();
+  });
+}
+
+function showDropDown() {
+  return `<span class="dropdown-item" id="manageUserCm"> 
+            <i class="menuIcon fas fa-user-cog mx-2"></i> Gestion des usagers </span>
+        <div class="dropdown-divider"  id="premier" ></div>
+        <span class="dropdown-item" id="loginCmd"> <i class="menuIcon fa fa-sign-out mx-2"></i> Connexion </span>
+        <span class="dropdown-item" id="logoutCmd"> <i class="menuIcon fa fa-sign-out mx-2"></i> Déconnexion </span>
+        <span class="dropdown-item" id="editProfileMenuCmd"> <i class="menuIcon fa fa-user-edit mx-2"></i> Modifier votre profil </span>
+        <div class="dropdown-divider" id="deuxieme" ></div>
+        <span class="dropdown-item" id="listPhotosMenuCmd"> <i class="menuIcon fa fa-image mx-2"></i> Liste des photos </span>
+        <div class="dropdown-divider"  id="troisieme" ></div>
+        <span class="dropdown-item" id="sortByDateCmd"> <i class="menuIcon fa fa-check mx-2"></i> 
+        <i class="menuIcon fa fa-calendar mx-2"></i> Photos par date de création </span> 
+        <span class="dropdown-item" id="sortByOwnersCmd"> <i class="menuIcon fa fa-fw mx-2"></i> 
+        <i class="menuIcon fa fa-users mx-2"></i> Photos par créateur </span> 
+        <span class="dropdown-item" id="sortByLikesCmd"> 
+        <i class="menuIcon fa fa-fw mx-2"></i> 
+        <i class="menuIcon fa fa-user mx-2"></i> Photos les plus aiméés </span> 
+        <span class="dropdown-item" id="ownerOnlyCmd"> <i
+        class="menuIcon fa fa-fw mx-2"></i> <i class="menuIcon fa fa-user mx-2"></i> Mes photos </span>
+        <div class="dropdown-divider"></div>
+        <span class="dropdown-item" id="aboutCmd"> 
+        <i class="menuIcon fa fa-info-circle mx-2"></i> À propos... </span></div>`;
 }
 
 function renderAbout() {
@@ -119,9 +206,10 @@ function renderAbout() {
                     Collège Lionel-Groulx, automne 2023
                 </p>
             </div>
-        `)
+    `)
   );
 }
+
 function renderError(msg) {
   saveContentScrollPosition();
   eraseContent();
@@ -138,6 +226,7 @@ function renderError(msg) {
         `)
   );
 }
+
 //added
 //true if creating a new user
 function saveUserInput(isToCreate = false) {
@@ -147,6 +236,8 @@ function saveUserInput(isToCreate = false) {
     Name = $("#Name").val();
   }
 }
+//logout
+
 //login
 async function login() {
   const res = await API.login(Email, Password);
@@ -165,7 +256,7 @@ async function login() {
       PasswordError = "";
     }
 
-    renderLoginForm(loginMessage, Email, EmailError, PasswordError);
+    // renderLoginForm(loginMessage, Email, EmailError, PasswordError);
   } else {
     console.log(API.retrieveLoggedUser());
     if (API.retrieveLoggedUser().VerifyCode === "verified") {
@@ -221,6 +312,7 @@ function renderLoginForm(
         `)
   );
 }
+
 //create
 function renderCreateProfile() {
   //fonction du prof
@@ -324,6 +416,7 @@ function renderCreateProfile() {
     createProfile(profile); // commander la création au service API
   });
 }
+
 async function createProfile(profile) {
   if (await API.register(profile)) {
     loginMessage = "Votre compte a ete cree.";
@@ -332,6 +425,7 @@ async function createProfile(profile) {
     renderError("Un probleme est survenu.");
   }
 }
+
 function getFormData($form) {
   const removeTag = new RegExp("(<[a-zA-Z0-9]+>)|(</[a-zA-Z0-9]+>)", "g");
   var jsonObject = {};
@@ -375,6 +469,7 @@ function renderCreateProfileVerification() {
     }
   });
 }
+
 async function profileVerification() {
   if (await API.verifyEmail(API.retrieveLoggedUser().Id, Code)) {
     renderAbout();
@@ -382,4 +477,62 @@ async function profileVerification() {
     CodeError = "Le code ne correspond pas au code lie a votre compte";
   }
   renderCreateProfileVerification();
+}
+
+function renderModificationProfile() {
+  updateHeader("Modification", "Modification");
+  let loggedUser = API.retrieveLoggedUser();
+  saveContentScrollPosition();
+  eraseContent();
+  initImageUploaders()
+
+  $("#content").append(
+    $(`
+ <form class="form" id="editProfileForm"> <input type="hidden" name="Id" id="Id" value="${loggedUser.Id}"/>
+        <fieldset>
+            <legend>Adresse ce courriel</legend>
+            <input type="email" class="form-control Email" name="Email" id="Email" placeholder="Courriel" required
+                   RequireMessage='Veuillez entrer votre courriel' InvalidMessage='Courriel invalide'
+                   CustomErrorMessage="Ce courriel est déjà utilisé" value="${loggedUser.Email}"> 
+            <input
+                class="form-control MatchedInput" type="text" matchedInputId="Email" name="matchedEmail"
+                id="matchedEmail" placeholder="Vérification" required
+                RequireMessage='Veuillez entrez de nouveau votre courriel'
+                InvalidMessage="Les courriels ne correspondent pas" value="${loggedUser.Email}"></fieldset>
+        <fieldset>
+            <legend>Mot de passe</legend>
+            <input type="password" class="form-control" name="Password" id="Password" placeholder="Mot de passe"
+                   InvalidMessage='Mot de passe trop court'> <input class="form-control MatchedInput" type="password"
+                                                                    matchedInputId="Password" name="matchedPassword"
+                                                                    id="matchedPassword" placeholder="Vérification"
+                                                                    InvalidMessage="Ne correspond pas au mot de passe">
+        </fieldset>
+        <fieldset>
+            <legend>Nom</legend>
+            <input type="text" class="form-control Alpha" name="Name" id="Name" placeholder="Nom" required
+                   RequireMessage='Veuillez entrer votre nom' InvalidMessage='Nom invalide' value="${loggedUser.Name}">
+        </fieldset>
+        <fieldset>
+            <legend>Avatar</legend>
+                 <div class="imageUploader"
+                         newImage='false'
+                         controlId='Avatar'
+                         imageSrc='${loggedUser.Avatar}'
+                        waitingImage="images/Loading_icon.gif">
+                    </div>
+        </fieldset>
+        <input type='submit' name='submit' id='saveUserCmd' value="Enregistrer"
+               class="form-control btn-primary"> </form>
+        <div class="cancel">
+            <button class="form-control btn-secondary" id="abortCmd">Annuler</button>
+        </div>
+        <div class="cancel">
+            <hr>
+            <a>
+                <button class="form-control btn-warning">Effacer le compte</button>
+            </a></div>
+
+    </div>
+    `)
+  );
 }
